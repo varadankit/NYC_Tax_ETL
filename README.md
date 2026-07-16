@@ -1,17 +1,16 @@
-# NYC Taxi ETL — Data Engineering Learning Project
+# 🚕 NYC Taxi ETL — Data Engineering Learning Project
 
 A small but realistic batch ETL pipeline: download public NYC TLC Yellow Taxi trip
 data, clean it with pandas, and load it into a Postgres star schema running in Docker.
 
-## Architecture
+## 🔀 Architecture
 
-```
-NYC TLC (public S3/CloudFront)          Postgres (Docker)
-   |  parquet + CSV                        ^
-   v                                        |
-extract.py --> transform.py --> load.py ----+
- (download,     (pandas clean,   (schema DDL,
-  idempotent)    feature eng.)    truncate+COPY load)
+```mermaid
+flowchart LR
+    A[🌐 NYC TLC<br/>public data] -->|parquet + CSV| B[📥 extract.py<br/>idempotent download]
+    B --> C[🧹 transform.py<br/>pandas clean + feature eng.]
+    C --> D[📤 load.py<br/>schema DDL + truncate/COPY]
+    D --> E[(🐘 Postgres)]
 ```
 
 - **Extract** (`src/extract.py`): downloads one month of Yellow Taxi trip data
@@ -28,13 +27,13 @@ extract.py --> transform.py --> load.py ----+
 - **Orchestrate** (`src/pipeline.py`): runs extract → transform → load in
   order with logging and no silent error handling.
 
-## Data model (star schema)
+## ⭐ Data model (star schema)
 
 - `dim_location` — taxi zones (borough, zone, service zone)
 - `dim_date` — one row per calendar day in the loaded range
 - `fact_trips` — one row per trip, FKs into both dimensions
 
-## Setup
+## ⚙️ Setup
 
 ```bash
 # 1. Start Postgres + pgAdmin
@@ -54,11 +53,11 @@ month of data to pull (`TAXI_MONTH=YYYY-MM`). Data must exist at
 `https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_<MONTH>.parquet`
 — NYC TLC publishes with a ~2 month lag, so if a month 404s, try an earlier one.
 
-## Exploring the data
+## 🔍 Exploring the data
 
-pgAdmin is available at [http://localhost:5050](http://localhost:5050) (login
-with `PGADMIN_EMAIL`/`PGADMIN_PASSWORD` from `.env`). Register a server pointing
-at host `postgres`, port `5432`, using the `POSTGRES_*` credentials from `.env`.
+pgAdmin runs locally on port `5050` (login with `PGADMIN_EMAIL`/`PGADMIN_PASSWORD`
+from `.env`). Register a server pointing at host `postgres`, port `5432`, using
+the `POSTGRES_*` credentials from `.env`.
 
 Example query once loaded:
 
@@ -70,7 +69,7 @@ GROUP BY dl.borough
 ORDER BY avg_fare DESC;
 ```
 
-## Tests
+## ✅ Tests
 
 ```bash
 pytest tests/
@@ -79,13 +78,13 @@ pytest tests/
 Covers the transform logic (cleaning rules, date dimension generation) without
 needing a database.
 
-## Idempotency
+## 🔁 Idempotency
 
 Re-running `python -m src.pipeline` is safe: `extract` skips files already on
 disk, and `load` truncates every table before reloading, so you never get
 duplicate rows.
 
-## Where to go next
+## 🚀 Where to go next
 
 This project intentionally stops at "one script, one month, one machine."
 Natural next steps as you keep learning:
